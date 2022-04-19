@@ -28,6 +28,7 @@ struct Result: Decodable {
     Gender: \(gender)
     Origin: \(origin.name)
     Location: \(location.name)
+    Episode: \(episode.count)
     """
     }
 }

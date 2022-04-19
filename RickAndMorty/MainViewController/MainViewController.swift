@@ -9,12 +9,15 @@ protocol MainViewProtocol: AnyObject {
 final class MainViewController: UIViewController {
     
     private var presenter: MainViewPresenterProtocol!
+    
+    let urlApi = URLS.rickandmortyapi.rawValue
 
     private lazy var mainTableView: UITableView = {
         let tableView = UITableView()
-        tableView.backgroundColor = #colorLiteral(red: 0.1363289952, green: 0.1411529481, blue: 0.1541091204, alpha: 1)
+        tableView.backgroundColor = #colorLiteral(red: 0.8039215803, green: 0.8039215803, blue: 0.8039215803, alpha: 1)
         tableView.register(MainViewTableViewCell.self, forCellReuseIdentifier: MainViewTableViewCell.cellIdentifier)
         tableView.keyboardDismissMode = .interactive
+        tableView.rowHeight = 100
         return tableView
     }()
     
@@ -23,12 +26,13 @@ final class MainViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.addSubview(mainTableView)
-        mainTableView.backgroundColor = .red
         mainTableView.dataSource = self
         mainTableView.delegate = self
         setupConstraints()
         setNavigationBar()
-        presenter.fetchData()
+        let networkManager = NetworkManager()
+        presenter = MainViewPresenter(view: self, networkManager: networkManager)
+        presenter.fetchData(from: urlApi)
     }
     
     func setNavigationBar() {
@@ -50,11 +54,11 @@ final class MainViewController: UIViewController {
     }
 
     @objc func rightHandAction() {
-        
+        presenter.fetchData(from: presenter.rickAndMorty?.info.next ?? "1")
     }
     
     @objc func leftHandAction() {
-        
+        presenter.fetchData(from: presenter.rickAndMorty?.info.prev ?? "1")
     }
     
     private func setupConstraints() {
@@ -83,6 +87,14 @@ extension MainViewController: UITableViewDataSource {
 // MARK: - TableView delegate
 
 extension MainViewController: UITableViewDelegate {
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        guard let result = presenter.rickAndMorty?.results[indexPath.row] else {return}
+        let detailVC = ModuleAssembler.createDetailModule(result: result)
+        detailVC.modalPresentationStyle = .fullScreen
+        present(detailVC, animated: true, completion: nil)
+    }
     
 }
 
